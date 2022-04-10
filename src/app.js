@@ -1,9 +1,8 @@
 App = {
 
+	loading: false,
 	contracts: {},
-    loading: false,
-
-
+    
 	load: async() => {
 		await App.loadWeb3()
 		await App.loadAccount()
@@ -56,7 +55,8 @@ App = {
 		//var contract=require("truffle-contract")
 		const todoList = await $.getJSON('TodoList.json')
 		App.contracts.TodoList=TruffleContract(todoList)
-		App.contracts.TodoList.setProvider(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
+		//App.contracts.TodoList.setProvider(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
+		App.contracts.TodoList.setProvider(window.ethereum);
 		console.log(todoList)
 
 		// Hydrate smart contracts with values from blockchain
@@ -104,15 +104,15 @@ App = {
 			$newTaskTemplate.find('input')
 							.prop('name',taskId)
 							.prop('name',taskCompleted)
-							//.on('click', App.toggleCompleted)
+							.on('click', App.toggleCompleted)
 		
 
 		// Checks if tasks is completed
 		if (taskCompleted) {
-			$('#completedTaskList').append($newTaskTemplate)
+			$('#completedTaskList').prepend($newTaskTemplate)
 		}
 		else {
-			$('#taskList').append($newTaskTemplate)
+			$('#taskList').prepend($newTaskTemplate)
 		}
 
 
@@ -125,11 +125,19 @@ App = {
 
 	createTask: async () =>{
 
-		App.setLoading(true)
+		App.setLoading(true)	// loading screen
 		const content = $('#newTask').val()
 		await App.todoList.createTask(content, {from: App.account})
 		window.location.reload() // to refresh page
 
+	},
+
+	toggleCompleted: async (e) => {
+		App.setLoading(true)
+    	const taskId = e.target.name
+    	console.log(taskId);
+    	await App.todoList.toggleCompleted(taskId, {from: App.account})
+    	window.location.reload() // to refresh page
 	},
 
 	setLoading: (boolean) => {
@@ -143,8 +151,7 @@ App = {
 	      loader.hide()
 	      content.show()
 	    }
-  }
-
+	}
 }
 
 $(() => {
